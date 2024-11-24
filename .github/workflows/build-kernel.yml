@@ -1,10 +1,10 @@
 name: Kernel Builder
 
 on:
-  push:
+  push:  # Automatically trigger on every push
     branches:
-      - lineage-21
-  pull_request:
+      - lineage-21  # Replace with the branch(es) you want to monitor
+  pull_request:  # Automatically trigger on pull requests to the specified branch
     branches:
       - lineage-21
 
