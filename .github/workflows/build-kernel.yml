@@ -1,16 +1,17 @@
 name: Kernel Builder
 
 on:
-  push:  # Automatically trigger on every push
+  push:  # Trigger workflow on every push
     branches:
-      - main  # Change to 'main' to match your branch name
-  pull_request:  # Automatically trigger on pull requests to the 'main' branch
+      - main  # Change 'main' to match your branch name
+  pull_request:  # Trigger workflow on pull requests to the 'main' branch
     branches:
       - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Kernel Source
         uses: actions/checkout@v3
@@ -21,15 +22,13 @@ jobs:
       - name: Setup Build Environment
         run: |
           sudo apt update
-          sudo apt install -y build-essential gcc clang ccache libncurses5-dev libssl-dev bison flex bc
-          mkdir -p $GITHUB_WORKSPACE/output
+          sudo apt install -y build-essential gcc-aarch64-linux-gnu clang ccache libncurses5-dev libssl-dev bison flex bc git zip
 
       - name: Build Kernel
         env:
-          CONFIG_ENV: config.env
+          ARCH: arm64
+          CROSS_COMPILE: aarch64-linux-gnu-
         run: |
-          export ARCH=arm64
-          export CROSS_COMPILE=aarch64-linux-gnu-
           export PATH=$PATH:/usr/lib/llvm-14/bin
           make ruby_defconfig
           make -j$(nproc) Image.gz-dtb
