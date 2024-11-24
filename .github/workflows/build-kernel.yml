@@ -23,7 +23,7 @@ jobs:
           sudo apt update
           sudo apt install -y nala
           sudo nala update
-          sudo nala install build-essential gcc-aarch64-linux-gnu clang ccache \
+          sudo nala install --assume-yes build-essential gcc-aarch64-linux-gnu clang ccache \
             libncurses5-dev libssl-dev bison flex bc git zip curl
           mkdir -p $GITHUB_WORKSPACE/output
 
