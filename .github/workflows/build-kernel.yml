@@ -58,6 +58,13 @@ jobs:
           make O=$GITHUB_WORKSPACE/output ruby_defconfig
           make O=$GITHUB_WORKSPACE/output -j2 Image.gz-dtb | tee build.log
 
+      - name: Verify Kernel Output
+        run: |
+          if [ ! -f $GITHUB_WORKSPACE/output/arch/arm64/boot/Image.gz-dtb ]; then
+            echo "Error: Image.gz-dtb not found in the build output."
+            exit 1
+          fi
+
       - name: Package Kernel with AnyKernel3
         if: success()
         run: |
@@ -71,3 +78,8 @@ jobs:
         with:
           name: compiled-kernel
           path: $GITHUB_WORKSPACE/anykernel/kernel.zip
+
+      - name: Clean up Swap Space
+        run: |
+          sudo swapoff /swapfile
+          sudo rm /swapfile
