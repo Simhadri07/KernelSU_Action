@@ -26,6 +26,9 @@ jobs:
           sudo nala install --assume-yes build-essential gcc-aarch64-linux-gnu clang ccache \
             libncurses5-dev libssl-dev bison flex bc git zip curl
           mkdir -p $GITHUB_WORKSPACE/output
+          echo "Storage after setup:"
+          df -h
+          free -h
 
       - name: Add Swap Space
         run: |
@@ -34,6 +37,8 @@ jobs:
           sudo mkswap /swapfile
           sudo swapon /swapfile
           free -h
+          echo "Storage after adding swap space:"
+          df -h
 
       - name: Cache Kernel Build Artifacts
         uses: actions/cache@v3
@@ -42,6 +47,9 @@ jobs:
           key: ${{ runner.os }}-kernel-build-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-kernel-build-
+        run: |
+          echo "Storage after caching kernel build artifacts:"
+          df -h
 
       - name: Cache AnyKernel3 Repository
         uses: actions/cache@v3
@@ -50,6 +58,9 @@ jobs:
           key: ${{ runner.os }}-anykernel3-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-anykernel3-
+        run: |
+          echo "Storage after caching AnyKernel3 repository:"
+          df -h
 
       - name: Build Kernel
         env:
@@ -59,6 +70,9 @@ jobs:
           export PATH=$PATH:/usr/lib/llvm-14/bin
           make O=$GITHUB_WORKSPACE/output ruby_defconfig
           make O=$GITHUB_WORKSPACE/output -j2 Image.gz-dtb | tee build.log
+          echo "Storage after kernel build:"
+          df -h
+          free -h
 
       - name: Verify Kernel Output
         run: |
@@ -66,6 +80,8 @@ jobs:
             echo "Kernel Image not found. Build failed!"
             exit 1
           fi
+          echo "Storage after verifying kernel output:"
+          df -h
 
       - name: Package Kernel with AnyKernel3
         if: success()
@@ -74,9 +90,14 @@ jobs:
           cp $GITHUB_WORKSPACE/output/arch/arm64/boot/Image.gz-dtb $GITHUB_WORKSPACE/anykernel/
           cd $GITHUB_WORKSPACE/anykernel
           zip -r9 kernel.zip .
+          echo "Storage after packaging kernel with AnyKernel3:"
+          df -h
 
       - name: Upload Kernel Artifact
         uses: actions/upload-artifact@v3
         with:
           name: compiled-kernel
           path: $GITHUB_WORKSPACE/anykernel/kernel.zip
+        run: |
+          echo "Storage after uploading kernel artifact:"
+          df -h
