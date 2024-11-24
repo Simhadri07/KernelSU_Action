@@ -47,6 +47,8 @@ jobs:
           key: ${{ runner.os }}-kernel-build-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-kernel-build-
+        
+      - name: Check storage after caching kernel build artifacts
         run: |
           echo "Storage after caching kernel build artifacts:"
           df -h
@@ -58,6 +60,8 @@ jobs:
           key: ${{ runner.os }}-anykernel3-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-anykernel3-
+
+      - name: Check storage after caching AnyKernel3 repository
         run: |
           echo "Storage after caching AnyKernel3 repository:"
           df -h
@@ -98,6 +102,8 @@ jobs:
         with:
           name: compiled-kernel
           path: $GITHUB_WORKSPACE/anykernel/kernel.zip
+
+      - name: Check storage after uploading kernel artifact
         run: |
           echo "Storage after uploading kernel artifact:"
           df -h
