@@ -1,29 +1,43 @@
 name: Kernel Builder
 
 on:
-  push:  # Trigger workflow on every push
+  push:
     branches:
-      - main  # Change 'main' to match your branch name
-  pull_request:  # Trigger workflow on pull requests to the 'main' branch
+      - main
+  pull_request:
     branches:
       - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
+      # Step 1: Checkout the Kernel Source
       - name: Checkout Kernel Source
         uses: actions/checkout@v3
         with:
           repository: xiaomi-mediatek-devs/android_kernel_xiaomi_mt6877
-          ref: lineage-21  # Ensure this matches your branch name
+          ref: lineage-21
 
+      # Step 2: Setup Build Environment
       - name: Setup Build Environment
         run: |
           sudo apt update
-          sudo apt install -y build-essential gcc-aarch64-linux-gnu clang ccache libncurses5-dev libssl-dev bison flex bc git zip
+          sudo apt install -y \
+            build-essential gcc-aarch64-linux-gnu clang ccache libncurses5-dev \
+            libssl-dev bison flex bc git zip curl
+          mkdir -p $GITHUB_WORKSPACE/output
 
+      # Step 3: Add Swap Space (to prevent memory issues)
+      - name: Add Swap Space
+        run: |
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          free -h
+
+      # Step 4: Build the Kernel
       - name: Build Kernel
         env:
           ARCH: arm64
@@ -31,8 +45,9 @@ jobs:
         run: |
           export PATH=$PATH:/usr/lib/llvm-14/bin
           make ruby_defconfig
-          make -j$(nproc) Image.gz-dtb
+          make -j2 Image.gz-dtb | tee build.log
 
+      # Step 5: Package the Kernel with AnyKernel3
       - name: Package Kernel with AnyKernel3
         if: success()
         run: |
@@ -41,6 +56,7 @@ jobs:
           cd $GITHUB_WORKSPACE/anykernel
           zip -r9 kernel.zip .
 
+      # Step 6: Upload Compiled Kernel
       - name: Upload Kernel Artifact
         uses: actions/upload-artifact@v3
         with:
