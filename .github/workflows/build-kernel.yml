@@ -18,10 +18,12 @@ jobs:
           repository: xiaomi-mediatek-devs/android_kernel_xiaomi_mt6877
           ref: lineage-21
 
-      - name: Setup Build Environment
+      - name: Setup Build Environment with Nala
         run: |
           sudo apt update
-          sudo apt install -y build-essential gcc-aarch64-linux-gnu clang ccache \
+          sudo apt install -y nala
+          sudo nala update -y
+          sudo nala install -y build-essential gcc-aarch64-linux-gnu clang ccache \
             libncurses5-dev libssl-dev bison flex bc git zip curl
           mkdir -p $GITHUB_WORKSPACE/output
 
@@ -61,7 +63,7 @@ jobs:
       - name: Verify Kernel Output
         run: |
           if [ ! -f $GITHUB_WORKSPACE/output/arch/arm64/boot/Image.gz-dtb ]; then
-            echo "Error: Image.gz-dtb not found in the build output."
+            echo "Kernel Image not found. Build failed!"
             exit 1
           fi
 
@@ -78,8 +80,3 @@ jobs:
         with:
           name: compiled-kernel
           path: $GITHUB_WORKSPACE/anykernel/kernel.zip
-
-      - name: Clean up Swap Space
-        run: |
-          sudo swapoff /swapfile
-          sudo rm /swapfile
