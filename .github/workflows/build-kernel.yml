@@ -12,23 +12,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the Kernel Source
       - name: Checkout Kernel Source
         uses: actions/checkout@v3
         with:
           repository: xiaomi-mediatek-devs/android_kernel_xiaomi_mt6877
           ref: lineage-21
 
-      # Step 2: Setup Build Environment
       - name: Setup Build Environment
         run: |
           sudo apt update
-          sudo apt install -y \
-            build-essential gcc-aarch64-linux-gnu clang ccache libncurses5-dev \
-            libssl-dev bison flex bc git zip curl
+          sudo apt install -y build-essential gcc-aarch64-linux-gnu clang ccache \
+            libncurses5-dev libssl-dev bison flex bc git zip curl
           mkdir -p $GITHUB_WORKSPACE/output
 
-      # Step 3: Add Swap Space (to prevent memory issues)
       - name: Add Swap Space
         run: |
           sudo fallocate -l 4G /swapfile
@@ -37,26 +33,39 @@ jobs:
           sudo swapon /swapfile
           free -h
 
-      # Step 4: Build the Kernel
+      - name: Cache Kernel Build Artifacts
+        uses: actions/cache@v3
+        with:
+          path: $GITHUB_WORKSPACE/output
+          key: ${{ runner.os }}-kernel-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-kernel-build-
+
+      - name: Cache AnyKernel3 Repository
+        uses: actions/cache@v3
+        with:
+          path: $GITHUB_WORKSPACE/anykernel
+          key: ${{ runner.os }}-anykernel3-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-anykernel3-
+
       - name: Build Kernel
         env:
           ARCH: arm64
           CROSS_COMPILE: aarch64-linux-gnu-
         run: |
           export PATH=$PATH:/usr/lib/llvm-14/bin
-          make ruby_defconfig
-          make -j2 Image.gz-dtb | tee build.log
+          make O=$GITHUB_WORKSPACE/output ruby_defconfig
+          make O=$GITHUB_WORKSPACE/output -j2 Image.gz-dtb | tee build.log
 
-      # Step 5: Package the Kernel with AnyKernel3
       - name: Package Kernel with AnyKernel3
         if: success()
         run: |
-          git clone https://github.com/osm0sis/AnyKernel3 $GITHUB_WORKSPACE/anykernel
-          cp arch/arm64/boot/Image.gz-dtb $GITHUB_WORKSPACE/anykernel/
+          git clone https://github.com/osm0sis/AnyKernel3 $GITHUB_WORKSPACE/anykernel || true
+          cp $GITHUB_WORKSPACE/output/arch/arm64/boot/Image.gz-dtb $GITHUB_WORKSPACE/anykernel/
           cd $GITHUB_WORKSPACE/anykernel
           zip -r9 kernel.zip .
 
-      # Step 6: Upload Compiled Kernel
       - name: Upload Kernel Artifact
         uses: actions/upload-artifact@v3
         with:
