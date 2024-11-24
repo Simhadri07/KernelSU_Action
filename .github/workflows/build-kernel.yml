@@ -3,10 +3,10 @@ name: Kernel Builder
 on:
   push:  # Automatically trigger on every push
     branches:
-      - lineage-21  # Replace with the branch(es) you want to monitor
-  pull_request:  # Automatically trigger on pull requests to the specified branch
+      - main  # Change to 'main' to match your branch name
+  pull_request:  # Automatically trigger on pull requests to the 'main' branch
     branches:
-      - lineage-21
+      - main
 
 jobs:
   build:
@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: xiaomi-mediatek-devs/android_kernel_xiaomi_mt6877
-          ref: lineage-21
+          ref: main  # Ensure this matches your branch name
 
       - name: Setup Build Environment
         run: |
